@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+/* =======================
+   ENUMS
+======================= */
+
+enum Role {
+  CANDIDATE
+  RECRUITER
+  HIRING_MANAGER
+}
+
+enum JobStatus {
+  OPEN
+  CLOSED
+}
+
+enum ApplicationStage {
+  APPLIED
+  SCREENING
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+}
+
+/* =======================
+   MODELS
+======================= */
+
+model Company {
+  id    Int    @id @default(autoincrement())
+  name  String
+
+  users User[]
+  jobs  Job[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+
+  companyId Int?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  jobs         Job[]         @relation("RecruiterJobs")
+  applications Application[]
+
+  applicationHistories ApplicationHistory[] @relation("UserApplicationHistory")
+
+  createdAt DateTime @default(now())
+}
+
+
+model Job {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String
+  status      JobStatus @default(OPEN)
+
+  companyId   Int
+  recruiterId Int
+
+  company   Company @relation(fields: [companyId], references: [id])
+  recruiter User    @relation("RecruiterJobs", fields: [recruiterId], references: [id])
+
+  applications Application[]
+
+  createdAt DateTime @default(now())
+}
+
+model Application {
+  id          Int              @id @default(autoincrement())
+  stage       ApplicationStage @default(APPLIED)
+
+  jobId       Int
+  candidateId Int
+
+  job       Job  @relation(fields: [jobId], references: [id])
+  candidate User @relation(fields: [candidateId], references: [id])
+
+  history ApplicationHistory[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([jobId, candidateId])
+}
+
+model ApplicationHistory {
+  id            Int              @id @default(autoincrement())
+  applicationId Int
+  fromStage     ApplicationStage
+  toStage       ApplicationStage
+  changedById   Int
+
+  application Application @relation(fields: [applicationId], references: [id])
+  changedBy   User        @relation("UserApplicationHistory", fields: [changedById], references: [id])
+
+  changedAt DateTime @default(now())
+}
+
+
