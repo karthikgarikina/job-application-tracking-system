@@ -28,15 +28,39 @@ const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // ✅ declare ONCE
     let companyId = null;
 
-    // create company if recruiter
+    // Recruiter → creates company
     if (role === "RECRUITER") {
       const company = await prisma.company.create({
         data: { name: companyName },
       });
       companyId = company.id;
     }
+
+    // Hiring Manager → joins existing company
+    if (role === "HIRING_MANAGER") {
+      const parsedCompanyId = Number(req.body.companyId);
+
+      if (!parsedCompanyId || isNaN(parsedCompanyId)) {
+        return res.status(400).json({
+          message: "Hiring Manager must provide a valid companyId",
+        });
+      }
+
+      const company = await prisma.company.findUnique({
+        where: { id: parsedCompanyId },
+      });
+
+      if (!company) {
+        return res.status(400).json({ message: "Invalid companyId" });
+      }
+
+      companyId = company.id;
+    }
+
+    // Candidate → companyId remains null ✅
 
     const user = await prisma.user.create({
       data: {

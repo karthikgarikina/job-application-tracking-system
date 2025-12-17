@@ -6,7 +6,10 @@ const {
   applyForJob,
   myApplications,
   applicationsForJob,
+  updateApplicationStage,
+  companyApplicationsForHM,
 } = require("./applications.controller");
+
 
 const router = express.Router();
 
@@ -34,8 +37,6 @@ router.get(
   applicationsForJob
 );
 
-const { updateApplicationStage } = require("./applications.controller");
-
 // Recruiter updates application stage
 router.post(
   "/update-stage",
@@ -43,5 +44,13 @@ router.post(
   authorize("RECRUITER"),
   updateApplicationStage
 );
+
+router.get(
+  "/company",
+  authenticate,
+  authorize("HIRING_MANAGER"),
+  companyApplicationsForHM
+);
+
 
 module.exports = router;

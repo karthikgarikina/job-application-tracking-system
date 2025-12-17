@@ -1,5 +1,6 @@
 const prisma = require("../../config/prisma");
 const { canTransition } = require("../../services/applicationWorkflow");
+const { addToEmailQueue } = require("../../queues/emailQueue");
 
 /**
  * Candidate applies for a job
@@ -45,6 +46,14 @@ const applyForJob = async (req, res) => {
       message: "Application submitted successfully",
       application,
     });
+    const { addToEmailQueue } = require("../../queues/emailQueue");
+
+    addToEmailQueue({
+      to: "recruiter@company.com",
+      subject: "New job application received",
+      body: `A new candidate has applied for job ID ${jobId}`,
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to apply for job" });
@@ -116,9 +125,15 @@ const updateApplicationStage = async (req, res) => {
 
     const application = await prisma.application.findUnique({
       where: { id: applicationId },
-      include: { job: true },
+      include: {
+        job: true,
+        candidate: {
+          select: {
+            email: true,
+          },
+        },
+      },
     });
-
     if (!application) {
       return res.status(404).json({ message: "Application not found" });
     }
@@ -142,6 +157,11 @@ const updateApplicationStage = async (req, res) => {
       data: { stage: toStage },
     });
 
+    addToEmailQueue({
+      to: application.candidate.email,
+      subject: "Application status updated",
+      body: `Your application moved from ${fromStage} to ${toStage}`,
+    });
     // audit log
     await prisma.applicationHistory.create({
       data: {
@@ -156,11 +176,42 @@ const updateApplicationStage = async (req, res) => {
       message: "Application stage updated",
       application: updatedApplication,
     });
+
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to update stage" });
   }
 };
+
+const companyApplicationsForHM = async (req, res) => {
+  try {
+    const { companyId } = req.user;
+
+    const applications = await prisma.application.findMany({
+      where: {
+        job: {
+          companyId,
+        },
+      },
+      include: {
+        job: true,
+        candidate: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.json(applications);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Failed to fetch company applications",
+    });
+  }
+};
+
 
 
 module.exports = {
@@ -168,4 +219,5 @@ module.exports = {
   myApplications,
   applicationsForJob,
   updateApplicationStage,
+  companyApplicationsForHM,
 };
