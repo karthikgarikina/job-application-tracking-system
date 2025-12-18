@@ -320,8 +320,9 @@ FROM "ApplicationHistory" ah
 JOIN "User" u ON u.id = ah."changedById"
 ORDER BY ah.createdAt;
 ```
-The audit trail is intentionally not exposed via a public API, as it is considered internal system data meant to be accessed only by administratorsfor monitoring and compliance purposes.
---- 
+### Note:
+- The audit trail is intentionally not exposed via a public API, as it is considered internal system data meant to be accessed only by administrators for monitoring and compliance purposes.
+---
 ## 11. Demo Video
 
 📹 **Demo Video Link:**  
