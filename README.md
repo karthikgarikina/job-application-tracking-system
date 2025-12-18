@@ -159,6 +159,62 @@ ApplicationHistory
 
 ---
 
+## 📂 Project Structure
+
+```
+job-application-tracking-system/
+├── backend/
+│ ├── src/
+│ │ ├── config/
+│ │ │ ├── prisma.js
+│ │ │ └── email.js
+│ │ │
+│ │ ├── middleware/
+│ │ │ ├── auth.middleware.js
+│ │ │ └── rbac.middleware.js
+│ │ │
+│ │ ├── modules/
+│ │ │ ├── auth/
+│ │ │ │ ├── auth.controller.js
+│ │ │ │ └── auth.routes.js
+│ │ │ │
+│ │ │ ├── jobs/
+│ │ │ │ ├── jobs.controller.js
+│ │ │ │ └── jobs.routes.js
+│ │ │ │
+│ │ │ ├── applications/
+│ │ │ │ ├── applications.controller.js
+│ │ │ │ └── applications.routes.js
+│ │ │
+│ │ ├── queues/
+│ │ │ └── emailQueue.js
+│ │ │
+│ │ ├── workers/
+│ │ │ └── emailWorker.js
+│ │ │
+│ │ ├── app.js
+│ │ └── server.js
+│ │
+│ ├── prisma/
+│ │ ├── schema.prisma
+│ │ └── migrations/
+│ │
+│ ├── .env
+│ ├── package.json
+│ └── README.md
+│
+├── ATS.postman_collection.json
+└── README.md
+```
+
+### Structure Highlights
+- **Modular design** by feature (auth, jobs, applications)
+- **Background worker & queue** isolated from API logic
+- **Clear separation of concerns**
+- Easy to scale and maintain
+
+---
+
 ## 7. Setup Instructions
 
 ### Prerequisites
@@ -232,7 +288,44 @@ Includes requests for:
 
 ---
 
-## 10. Demo Video (3–5 Minutes)
+## 10. Audit Trail (Application History)
+
+The system maintains a complete **audit trail** for application state changes to ensure traceability and accountability.
+
+### How Audit Trail Works
+- Every application stage change creates a new record
+- Stored in the `ApplicationHistory` table
+- Records:
+  - Previous stage
+  - New stage
+  - User who made the change
+  - Timestamp
+  
+### Example (Database View)
+
+```sql
+select * from "ApplicationHistory";
+```
+or
+
+```sql
+SELECT 
+  ah.applicationId,
+  ah.fromStage,.;
+  ah.toStage,
+  u.name AS changedBy,
+  u.role,
+  ah.createdAt
+FROM "ApplicationHistory" ah
+JOIN "User" u ON u.id = ah."changedById"
+ORDER BY ah.createdAt;
+```
+The audit trail is intentionally not exposed via a public API, as it is considered internal system data meant to be accessed only by administratorsfor monitoring and compliance purposes.
+--- 
+## 11. Demo Video
+
+📹 **Demo Video Link:**  
+<PASTE_YOUR_VIDEO_LINK_HERE>
 
 ### Demo Flow
 
@@ -240,16 +333,16 @@ Includes requests for:
 2. Candidate applies for the job
 3. Recruiter updates application stage
 4. Hiring Manager views applications
-5. Terminal shows email preview URLs
+5. Terminal shows asynchronous email preview URLs (Ethereal)
 
-Demonstrates:
-- Full workflow
-- RBAC enforcement
-- Async email processing
+### Demonstrates
+- Complete application workflow
+- Role-Based Access Control (RBAC)
+- Valid application state transitions
+- Asynchronous background email processing
 
----
 
-## 11. Notes on Design Choices
+## 12. Notes on Design Choices
 
 - In-memory queue used for simplicity and clarity
 - Ethereal Email used for safe SMTP testing
@@ -258,13 +351,14 @@ Demonstrates:
 
 ---
 
-## 12. Conclusion
+## 13. Conclusion
 
-This project demonstrates:
+This project demonstrates:S
 
 - Stateful backend workflows
 - Secure role-based systems
 - Asynchronous background processing
 - Real-world system design patterns
+- Future work includes adding a frontend interface to provide a complete end-to-end user experience
 
 Focus is placed on **correctness**, **maintainability**, and **clarity**.
