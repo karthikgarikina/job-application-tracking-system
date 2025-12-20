@@ -1,0 +1,11 @@
+# This project is built using Node.js and npm.
+# Dependencies are managed via package.json and package-lock.json.
+# The following list documents the core technologies and libraries used.
+
+Node.js
+Express.js
+PostgreSQL
+Prisma ORM
+JSON Web Token (JWT)
+Nodemailer
+Ethereal Email (SMTP testing)
